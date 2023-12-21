@@ -5,26 +5,43 @@ import * as fs from "fs"
 
 @Injectable()
 export class ReportService {
+    
 
     async generatePDF(): Promise<Transform> {
         var current_time: string = new Date(Date.now()).toLocaleString();
 
-        return await new Promise<Transform>((resolve, reject) => {
-            const pdfDoc = new PDFDocument({ size: "A4", font:"Times-Roman" })
+        const pdfDoc = new PDFDocument({ size: "A4", font:"Times-Roman", bufferPages: true })
         
+        const range = pdfDoc.bufferedPageRange()
 
-            pdfDoc.fontSize(16).text("Fellowship Company", {
-                align: "center"
+        // add the setup for the document
+        const setUpDocument = () => {
+            pdfDoc.fontSize(16).font("/home/prime/Desktop/reports/src/report/fonts/PlayfairDisplay-SemiBold.ttf").text("Fellowship Company", {
+                align: "left"
             })
-            
-            pdfDoc.fontSize(11).text("Email:fellowship@business.com", {
-                align: "center"
+               
+            pdfDoc.fontSize(12).text("Email:fellowship@business.com")
+            pdfDoc.fontSize(12).text("TEL: 0700000000", {
+                align: "left"
             })
+            pdfDoc.fontSize(12).text("Sctr Mombasa", {
+                align: "left"
+            })
+            pdfDoc.fontSize(12).text("PIN: P000000000D", {
+                align: "left"
+            })
+    
+            pdfDoc.moveUp(5)
+            pdfDoc.fontSize(12).text("End Of Day Report", {
+                align: "right"
+            })
+    
+            pdfDoc.moveTo(40, 165).lineTo(550, 165).stroke()
+        }
 
-            pdfDoc.moveTo(40, 110).lineTo(550, 110).stroke()
-            pdfDoc.moveTo(40, 112).lineTo(550, 112).stroke()
-
-            pdfDoc.moveDown(3)
+            // add the sales content
+        const addSalesContent = () => {
+            pdfDoc.moveDown(6)
             pdfDoc.fontSize(12).font("Times-Bold").text("SALES", {
                 width: 300,
                 columns: 1,
@@ -34,51 +51,53 @@ export class ReportService {
             pdfDoc.moveDown(1)
             pdfDoc.fontSize(12).text("Total Sales")
             pdfDoc.moveUp(1)
-            pdfDoc.fontSize(12).text("KES 0.00", {
+            pdfDoc.fontSize(12).font("Times-Bold").text("KES 0.00", {
                 align: "right"
             })
-
+    
             pdfDoc.moveDown(1)
-            pdfDoc.fontSize(12).text("Total VAT")
+            pdfDoc.fontSize(12).font("Times-Roman").text("Total VAT")
             pdfDoc.moveUp(1)
-            pdfDoc.fontSize(12).text("KES 0.00", {
+            pdfDoc.fontSize(12).font("Times-Bold").text("KES 0.00", {
                 align: "right"
             })
-
-            // pdfDoc.moveTo(40, 250).lineTo(550, 250).dash(7, { space: 5 }).stroke()
-
-            pdfDoc.moveDown(3)
-            pdfDoc.fontSize(12).text("MONTH to DATE", {
+    
+    
+            pdfDoc.moveDown(2)
+            pdfDoc.fontSize(12).font("Times-Roman").text("MONTH-TO-DATE", {
                 width: 300,
                 columns: 1,
                 align: "left"
             })
-            
-
+                
+    
             pdfDoc.moveDown(1)
             pdfDoc.fontSize(12).text("Total Sales")
             pdfDoc.moveUp(1)
-            pdfDoc.fontSize(12).text("KES 0.00", {
+            pdfDoc.fontSize(12).font("Times-Bold").text("KES 0.00", {
                 align: "right"
             })
-
+    
             pdfDoc.moveDown(1)
-            pdfDoc.fontSize(12).text("Total VAT")
+            pdfDoc.fontSize(12).font("Times-Roman").text("Total VAT")
             pdfDoc.moveUp(1)
-            pdfDoc.fontSize(12).text("KES 0.00", {
+            pdfDoc.fontSize(12).font("Times-Bold").text("KES 0.00", {
                 align: "right"
             })
-
+    
             pdfDoc.moveDown(1)
-            pdfDoc.fontSize(12).text("Turnover Tax")
+            pdfDoc.fontSize(12).font("Times-Roman").text("Turnover Tax (3%)")
             pdfDoc.moveUp(1)
-            pdfDoc.fontSize(12).text("KES 0.00", {
+            pdfDoc.fontSize(12).font("Times-Bold").text("KES 0.00", {
                 align: "right"
             });
+            pdfDoc.moveTo(40, 410).lineTo(550, 410).stroke()
+        }
 
-            pdfDoc.moveTo(40, 380).lineTo(550, 380).dash(7, { space: 5 }).stroke()
 
-            pdfDoc.moveDown(4)
+        // add credit note part of the document
+        const addCreditNoteContent = () => {
+            pdfDoc.moveDown(3)
             pdfDoc.font("Times-Bold").fontSize(12).text("CREDIT NOTE", {
                 width: 300,
                 columns: 1,
@@ -87,25 +106,50 @@ export class ReportService {
 
             pdfDoc.moveDown(1)
             pdfDoc.font("Times-Roman").fontSize(12).text(`As at ${current_time}`)
-            
-
+                
+    
             pdfDoc.moveDown(1)
             pdfDoc.fontSize(12).text("Total Amount")
             pdfDoc.moveUp(1)
-            pdfDoc.fontSize(12).text("KES 0.00", {
+            pdfDoc.fontSize(12).font("Times-Bold").text("KES 0.00", {
                 align: "right"
             })
 
-            pdfDoc.moveDown(3)
-            pdfDoc.fontSize(12).text("MONTH TO DATE")
+            pdfDoc.moveDown(2)
+            pdfDoc.fontSize(12).font("Times-Roman").text("MONTH-TO-DATE")
             
             pdfDoc.moveDown(1)
             pdfDoc.fontSize(12).text("Total Amount")
             pdfDoc.moveUp(1)
-            pdfDoc.fontSize(12).text("KES 0.00", {
+            pdfDoc.fontSize(12).font("Times-Bold").text("KES 0.00", {
                 align: "right"
             })
 
+            pdfDoc.moveDown(2)
+            pdfDoc.fontSize(12).font("Times-Roman").text("End Of Report")
+        }
+
+
+        // add footer
+        const addFooter = (i) => {
+            pdfDoc.switchToPage(i)
+            let oldBottomMargin = pdfDoc.page.margins.bottom;
+                
+            pdfDoc.page.margins.bottom = 0;
+            pdfDoc.moveTo(0, (pdfDoc.page.height - (oldBottomMargin / 3)) - 10).lineTo(pdfDoc.page.width, (pdfDoc.page.height - (oldBottomMargin / 3)) - 10).stroke()
+            pdfDoc.text("Report generated by Isale", pdfDoc.page.margins.left, pdfDoc.page.height - (oldBottomMargin / 3))
+            pdfDoc.page.margins.bottom = oldBottomMargin
+        }
+
+        for (let i = 0; i < range.count; i++) {
+                
+            setUpDocument()
+            addSalesContent()
+            addCreditNoteContent()
+            addFooter(i)                
+        }
+
+        return new Promise<Transform>((resolve, reject)=> {
             // Create a Transform stream to handle the output of the PDF document
             const transformStream = new Transform({
                 transform(chunk, encoding, callback) {
@@ -130,7 +174,7 @@ export class ReportService {
         
             // Start streaming
             pdfDoc.end();
-        });
+        })
 
     }
 
