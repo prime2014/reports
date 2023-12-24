@@ -149,7 +149,7 @@ export class ReportService {
             addFooter(i)                
         }
 
-        return new Promise<Transform>((resolve, reject)=> {
+        return await new Promise<Transform>((resolve, reject)=> {
             // Create a Transform stream to handle the output of the PDF document
             const transformStream = new Transform({
                 transform(chunk, encoding, callback) {
@@ -159,7 +159,7 @@ export class ReportService {
             });
         
             // Resolve the transform stream once the PDF is generated
-            pdfDoc.on('end', async () => {
+            pdfDoc.on('end', () => {
                 resolve(transformStream);
             });
 
