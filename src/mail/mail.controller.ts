@@ -1,3 +1,4 @@
+// mail.controller.ts
 import { Controller, Res, Get } from '@nestjs/common';
 import { MailService } from './mail.service';
 import { Response } from 'express';
@@ -9,12 +10,20 @@ export class MailController {
 
     @Get("/send")
     async sendClientEmail(@Res() res: Response) {
+        const recipients = ["omondiprime@gmail.com", "primesoftwarewizard@gmail.com", "omondipro@gmail.com"];
         try {
-            let response = await this.mailService.sendEndOfDayReport()
+            for(const recipient of recipients) {
+                console.log(`Sending email to ${recipient}`);
+                await this.mailService.sendEndOfDayReport(recipient)
+                console.log(`Email sent to ${recipient}`);
+            }
 
-            return response;
+            console.log('Bulk emails sent successfully');
+            return res.status(200).send('Bulk Emails with Attachment added to the queue successfully');
         } catch(error) {
-            return error;
+            console.error('Error sending emails:', error);
+            return res.status(500).send('Failed to send emails');
         }
     }
 }
+

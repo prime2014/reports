@@ -10,12 +10,15 @@ import { MailService } from './mail/mail.service';
 import { MailController } from './mail/mail.controller';
 import { ReportController } from './report/report.controller';
 import { ReportService } from './report/report.service';
-
+import sendgridConfig from './sendgrid.config';
 
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ 
+      isGlobal: true,
+      load: [sendgridConfig]
+    }),
   
     ReportModule,
     MailModule, 
