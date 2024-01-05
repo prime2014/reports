@@ -1,15 +1,21 @@
 // worker.ts
+require("dotenv").config()
 import * as amqp from 'amqplib/callback_api';
 import * as sgMail from '@sendgrid/mail';
 
-sgMail.setApiKey("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");
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-const queueUrl = "amqp://prime:belindat2014@localhost:5672/";
+const queueUrl = process.env.RABBITMQ_QUEUE_URL;
+
+
+var retry = 0;
 
 function connectToRabbitMQ() {
   amqp.connect(queueUrl, (error0, connection) => {
+    if (retry > 5) throw new Error("ERROR: Could not connect to RabbitMQ")
     if (error0) {
       console.error('Error connecting to RabbitMQ:', error0.message);
+      retry += 1
       setTimeout(connectToRabbitMQ, 5000); // Retry after 5 seconds
       return;
     }
@@ -61,9 +67,6 @@ process.once('SIGINT', () => {
 });
 
 
-// Connect to RabbitMQ
-connectToRabbitMQ();
-
 
 // Move consume logic outside the connectToRabbitMQ function
 function consumeMessages(channel) {
@@ -100,7 +103,7 @@ async function sendEmail(emailData) {
     attachments: [
       {
         content: attachmentContent,
-        filename: 'attachment.pdf',
+        filename: 'sales_report.pdf',
         type: 'application/pdf',
         disposition: 'attachment',
       },

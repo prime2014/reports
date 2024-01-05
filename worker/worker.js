@@ -37,14 +37,19 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 // worker.ts
+require("dotenv").config();
 var amqp = require("amqplib/callback_api");
 var sgMail = require("@sendgrid/mail");
-sgMail.setApiKey("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");
-var queueUrl = "amqp://prime:belindat2014@localhost:5672/";
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+var queueUrl = process.env.RABBITMQ_QUEUE_URL;
+var retry = 0;
 function connectToRabbitMQ() {
     amqp.connect(queueUrl, function (error0, connection) {
+        if (retry > 5)
+            throw new Error("ERROR: Could not connect to RabbitMQ");
         if (error0) {
             console.error('Error connecting to RabbitMQ:', error0.message);
+            retry += 1;
             setTimeout(connectToRabbitMQ, 5000); // Retry after 5 seconds
             return;
         }
@@ -85,8 +90,6 @@ process.once('SIGINT', function () {
         connection.close();
     }
 });
-// Connect to RabbitMQ
-connectToRabbitMQ();
 // Move consume logic outside the connectToRabbitMQ function
 function consumeMessages(channel) {
     channel.consume('email_queue', function (msg) {
@@ -125,7 +128,7 @@ function sendEmail(emailData) {
                         attachments: [
                             {
                                 content: attachmentContent,
-                                filename: 'attachment.pdf',
+                                filename: 'sales_report.pdf',
                                 type: 'application/pdf',
                                 disposition: 'attachment',
                             },
