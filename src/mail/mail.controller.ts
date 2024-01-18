@@ -12,11 +12,8 @@ export class MailController {
     async sendClientEmail(@Res() res: Response) {
         const recipients = ["omondiprime@gmail.com", "primesoftwarewizard@gmail.com", "omondipro@gmail.com"];
         try {
-            for(const recipient of recipients) {
-                console.log(`Sending email to ${recipient}`);
-                await this.mailService.sendEndOfDayReport(recipient)
-                console.log(`Email sent to ${recipient}`);
-            }
+            await this.mailService.sendEndOfDayReport(recipients)
+                
 
             console.log('Bulk emails sent successfully');
             return res.status(200).send('Bulk Emails with Attachment added to the queue successfully');

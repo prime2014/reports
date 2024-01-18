@@ -8,18 +8,20 @@ const path = require("path")
 export class MailTask {
     constructor(private readonly mailService: MailService){}
 
-    @Cron("0 0 18 * * 1-5", {
+    @Cron("0 21 11 * * 1-5", {
         timeZone: "Africa/Nairobi"
     })
     async sendClientEmail(@Res() res: Response) {
+        let emails = ["omondiprime@gmail.com", "primesoftwarewizard@gmail.com", "omondipro@gmail.com"]
         try {
-            let response = await this.mailService.sendEndOfDayReport("omondiprime@gmail.com")
+            let response = await this.mailService.sendEndOfDayReport(emails)
 
             return response;
         } catch(error) {
             return error;
         }
     }
+
 }
 
 

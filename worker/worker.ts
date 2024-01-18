@@ -2,6 +2,7 @@
 require("dotenv").config()
 import * as amqp from 'amqplib/callback_api';
 import * as sgMail from '@sendgrid/mail';
+import axios from "axios";
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -73,8 +74,15 @@ function consumeMessages(channel) {
   channel.consume('email_queue', (msg) => {
     if (msg !== null) {
       const emailData = JSON.parse(msg.content.toString());
-      sendEmail(emailData);
-      channel.ack(msg); // Acknowledge the message
+      
+      try {
+        sendEmail(emailData);
+        channel.ack(msg); 
+      } catch(error){
+        
+        throw error;
+      }
+      // Acknowledge the message
     }
   }, {
     noAck: false, // Set to false to manually acknowledge messages
@@ -91,26 +99,36 @@ async function sleep(ms) {
 }
 
 async function sendEmail(emailData) {
+ 
   // Implement the email sending logic using SendGrid
-  const { to, from, subject, html, attachmentContent } = emailData;
+  const { to, from, subject, message, attachmentContent, requestSource } = emailData;
 //   console.log(emailData)
 
   const msg = {
     to,
     from,
     subject,
-    html,
-    attachments: [
-      {
+    message,
+    attachment: {
         content: attachmentContent,
         filename: 'sales_report.pdf',
         type: 'application/pdf',
         disposition: 'attachment',
-      },
-    ],
+    },
+    requestSource 
   };
 
-  await sgMail.send(msg);
+  try {
+    let resp = await axios.post(process.env.EMAIL_SERVICE_BASE_URL, {emails: [msg]}, {
+      headers: {
+          "api-key": process.env.EMAIL_SERVICE_API_KEY,
+      }
+    })
+    
+  } catch(error) {
+   
+    throw error;
+  }
 
   console.log(`Email sent to ${to}`);
 }

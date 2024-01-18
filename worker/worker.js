@@ -40,6 +40,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv").config();
 var amqp = require("amqplib/callback_api");
 var sgMail = require("@sendgrid/mail");
+var axios_1 = require("axios");
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 var queueUrl = process.env.RABBITMQ_QUEUE_URL;
 var retry = 0;
@@ -95,8 +96,14 @@ function consumeMessages(channel) {
     channel.consume('email_queue', function (msg) {
         if (msg !== null) {
             var emailData = JSON.parse(msg.content.toString());
-            sendEmail(emailData);
-            channel.ack(msg); // Acknowledge the message
+            try {
+                sendEmail(emailData);
+                channel.ack(msg);
+            }
+            catch (error) {
+                throw error;
+            }
+            // Acknowledge the message
         }
     }, {
         noAck: false, // Set to false to manually acknowledge messages
@@ -115,28 +122,39 @@ function sleep(ms) {
 }
 function sendEmail(emailData) {
     return __awaiter(this, void 0, void 0, function () {
-        var to, from, subject, html, attachmentContent, msg;
+        var to, from, subject, message, attachmentContent, requestSource, msg, resp, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    to = emailData.to, from = emailData.from, subject = emailData.subject, html = emailData.html, attachmentContent = emailData.attachmentContent;
+                    to = emailData.to, from = emailData.from, subject = emailData.subject, message = emailData.message, attachmentContent = emailData.attachmentContent, requestSource = emailData.requestSource;
                     msg = {
                         to: to,
                         from: from,
                         subject: subject,
-                        html: html,
-                        attachments: [
-                            {
-                                content: attachmentContent,
-                                filename: 'sales_report.pdf',
-                                type: 'application/pdf',
-                                disposition: 'attachment',
-                            },
-                        ],
+                        message: message,
+                        attachment: {
+                            content: attachmentContent,
+                            filename: 'sales_report.pdf',
+                            type: 'application/pdf',
+                            disposition: 'attachment',
+                        },
+                        requestSource: requestSource
                     };
-                    return [4 /*yield*/, sgMail.send(msg)];
+                    _a.label = 1;
                 case 1:
-                    _a.sent();
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, axios_1.default.post(process.env.EMAIL_SERVICE_BASE_URL, { emails: [msg] }, {
+                            headers: {
+                                "api-key": process.env.EMAIL_SERVICE_API_KEY,
+                            }
+                        })];
+                case 2:
+                    resp = _a.sent();
+                    return [3 /*break*/, 4];
+                case 3:
+                    error_1 = _a.sent();
+                    throw error_1;
+                case 4:
                     console.log("Email sent to ".concat(to));
                     return [2 /*return*/];
             }
