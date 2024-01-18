@@ -8,7 +8,7 @@ const path = require("path")
 export class MailTask {
     constructor(private readonly mailService: MailService){}
 
-    @Cron("0 21 11 * * 1-5", {
+    @Cron("0 0 18 * * 1-5", {
         timeZone: "Africa/Nairobi"
     })
     async sendClientEmail(@Res() res: Response) {
