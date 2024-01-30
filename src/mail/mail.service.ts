@@ -1,7 +1,7 @@
 // mail.service.ts
 import { Injectable } from '@nestjs/common';
 import * as fs from "fs";
-import { ReportService } from '../../src/report/report.service';
+import { ReportService } from 'src/report/report.service';
 import { ConfigService } from '@nestjs/config';
 import * as sgMail from "@sendgrid/mail";
 import { Readable } from 'stream';
